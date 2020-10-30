@@ -4,7 +4,7 @@ Tracking exchange data from https://stooq.com using Github action.
 
 ## Workflows: Scrape latest global index
 
-* Scrape daily: `4 0 * * *`
+* Scrape daily: `5 1,5,9,13,17,21 * * *`
 * Create csv file monthly: `index/{{ index }}.csv`
 
 ## Workflow: Report <WIP>
