@@ -2,7 +2,7 @@
 
 Tracking exchange data from https://stooq.com using Github action.
 
-## Workflows: Scrape latest exchange rates
+## Workflows: Scrape latest global index
 
 * Scrape daily: `4 0 * * *`
 * Create csv file monthly: `index/{{ index }}.csv`
