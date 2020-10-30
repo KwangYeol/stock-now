@@ -1,0 +1,33 @@
+name: Scrape latest exchange rate data
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: '4 0 * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v2
+    - name: Fetch latest index
+      run: |-
+        declare -A index
+        index[kospi]=kospi
+        index[spx]=sp500
+        index[ndq]=nasdaq
+        index[dji]=dowjones
+        index[nkx]=nikkei225
+        index[shc]=shanghai
+        index[dax]=dax
+        for i in "${!index[@]}"; do; curl https://stooq.com/q/d/l/?s=^${i}&i=d -o "index/${index[$i]}.csv"; sleep 1; done;
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+        git commit -m "Latest data: ${timestamp}" || exit 0
+        git push
