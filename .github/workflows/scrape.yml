@@ -22,7 +22,7 @@ jobs:
         index[nkx]=nikkei225
         index[shc]=shanghai
         index[dax]=dax
-        for i in "${!index[@]}"; do; curl https://stooq.com/q/d/l/?s=^${i}&i=d -o "index/${index[$i]}.csv"; sleep 1; done;
+        for i in "${!index[@]}"; do; curl https://stooq.com/q/d/l/?s=^${i}&i=d -o "index/${index[$i]}.csv"; sleep 1; done
     - name: Commit and push if it changed
       run: |-
         git config user.name "Automated"
