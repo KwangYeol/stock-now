@@ -24,8 +24,7 @@ jobs:
         index[dax]=dax
         for i in "${!index[@]}"
         do
-        curl https://stooq.com/q/d/l/?s=^${i}&i=d -o "index/${index[$i]}.csv"
-        sleep 1
+          curl -s "https://stooq.com/q/d/l/?s=^${i}&i=d" > "index/${index[$i]}.csv"
         done
     - name: Commit and push if it changed
       run: |-
