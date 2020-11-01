@@ -1,3 +1,5 @@
+Updating 4 times a day for considering timezone. (At minute 5 past hour 1, 5, 9, 13, 17, and 21.)
+
 ```
 declare -A index
 index[kospi]=kospi
