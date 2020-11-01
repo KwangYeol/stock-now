@@ -25,7 +25,7 @@ jobs:
         ir[INTDSRJPM193N]="intdsr_japan"
         for i in "${!ir[@]}"
         do
-          curl -s "https://fred.stlouisfed.org/graph/fredgraph.csv?mode=fred&ts=12&tts=12&id=${i}&cosd=${FROM}&fq=Monthly&vintage_date=${NOW}&revision_date=${NOW}&nd=${FROM}" > "interest-rate/{ir[$i]}.csv"
+          curl -s "https://fred.stlouisfed.org/graph/fredgraph.csv?mode=fred&ts=12&tts=12&id=${i}&cosd=${FROM}&fq=Monthly&vintage_date=${NOW}&revision_date=${NOW}&nd=${FROM}" > "interest-rate/${ir[$i]}.csv"
         done
     - name: Commit and push if it changed
       run: |-
