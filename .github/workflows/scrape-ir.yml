@@ -15,16 +15,17 @@ jobs:
     - name: Fetch latest interest rate
       run: |-
         NOW=$(date +'%Y-%m-%d')
+        FROM="1950-01-01"
         declare -A ir
         # Korea
-        ir[INTDSRKRM193N]="1964-01-01"
+        ir[INTDSRKRM193N]="intdsr_korea"
         # USA
-        ir[INTDSRUSM193N]="1950-01-01"
+        ir[INTDSRUSM193N]="intdsr_usa"
         # Japan
-        ir[INTDSRJPM193N]="1953-01-01"
+        ir[INTDSRJPM193N]="intdsr_japan"
         for i in "${!ir[@]}"
         do
-          curl -s "https://fred.stlouisfed.org/graph/fredgraph.csv?mode=fred&ts=12&tts=12&id=INTDSRKRM193N&cosd=${ir[$i]}&fq=Monthly&vintage_date=${NOW}&revision_date=${NOW}&nd=${ir[$i]}" > "interest-rate/$i.csv"
+          curl -s "https://fred.stlouisfed.org/graph/fredgraph.csv?mode=fred&ts=12&tts=12&id=${i}&cosd=${FROM}&fq=Monthly&vintage_date=${NOW}&revision_date=${NOW}&nd=${FROM}" > "interest-rate/{ir[$i]}.csv"
         done
     - name: Commit and push if it changed
       run: |-
