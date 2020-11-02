@@ -1,0 +1,40 @@
+name: Scrape interest rate data
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron: '11 0 4,14,24 * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out this repo
+      uses: actions/checkout@v2
+    - name: Install gnumeric
+      run: sudo apt-get install -y --no-install-recommends gnumeric
+    - name: Fetch latest interest rate
+      run: |-
+        # date +'%d %h %Y'
+        NOW="$(date +'%d')%20$(date +'%h'),%20$(date +'%Y')"
+        FROM="31%20Dec,%201969"
+        declare -A ir
+        ir[quality]="101877,U,30"
+        ir[momentum]="103374,1,30"
+        ir[riskweighted]="98599,K,30"
+        ir[enhancedvalue]="125207,EV,30"
+        for i in "${!ir[@]}"
+        do
+          curl -s "https://app2.msci.com/webapp/indexperf/charts?indices=${ir[${i}]}&startDate=${FROM}&endDate=${NOW}&priceLevel=0&currency=0&frequency=D&scope=C&format=XLS&baseValue=false&site=gimi" > ${i}.xls
+          ssconvert ${i}.xls msci/${i}.csv
+          rm ${i}.xls
+        done
+    - name: Commit and push if it changed
+      run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        git add -A
+        timestamp=$(date -u)
+        git commit -m "Latest data: ${timestamp}" || exit 0
+        git push
