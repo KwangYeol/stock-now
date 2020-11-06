@@ -24,6 +24,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-renv-
 
+    - name: Install Curl
+      run: sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
+      
     - name: Restore packages
       shell: Rscript {0}
       run: |
