@@ -86,6 +86,13 @@
       "Repository": "CRAN",
       "Hash": "fa1289136d3861f34dd0af6f7e9d7ac9"
     },
+    "arrow": {
+      "Package": "arrow",
+      "Version": "0.17.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "41e7a68ae10b635fa8982257df2a285f"
+    },
     "askpass": {
       "Package": "askpass",
       "Version": "1.1",
@@ -113,6 +120,20 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "543776ae6848fde2f48ff3816d0628bc"
+    },
+    "bit": {
+      "Package": "bit",
+      "Version": "1.1-15.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "eb6c52d8cc44463085a4cde1c63df163"
+    },
+    "bit64": {
+      "Package": "bit64",
+      "Version": "0.9-7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3338d4a9b1352f5a613e2bdcefe784ea"
     },
     "broom": {
       "Package": "broom",
