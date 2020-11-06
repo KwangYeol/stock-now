@@ -27,6 +27,7 @@ jobs:
     - name: Restore packages
       shell: Rscript {0}
       run: |
+        dir.create("${{ env.RENV_PATHS_ROOT }}", recursive = TRUE)
         .libPaths("${{ env.RENV_PATHS_ROOT }}")
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
         renv::restore()
