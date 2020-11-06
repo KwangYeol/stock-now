@@ -16,6 +16,10 @@ jobs:
     - name: Check out this repo
       uses: actions/checkout@v2
 
+    - uses: r-lib/actions/setup-r@v1
+      with:
+        r-version: '3.6.3' # The R version to download (if necessary) and use.
+
     # https://github.com/actions/cache/blob/main/examples.md#r---renv
     - uses: actions/cache@v2
       with:
@@ -26,10 +30,6 @@ jobs:
 
     - name: Install system packages
       run: sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
-
-    - uses: r-lib/actions/setup-r@v1
-      with:
-        r-version: '3.6.3' # The R version to download (if necessary) and use.
 
     - name: Restore packages
       shell: Rscript {0}
