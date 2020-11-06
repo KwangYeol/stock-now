@@ -78,7 +78,7 @@ write_symbols <- function(symbols, filename) {
   }
   sym_list <- do.call(rbind, sym_list)
 
-  tkpath <- file.path("obs", paste0(filename, ".parquet")
+  tkpath <- file.path("obs", paste0(filename, ".parquet"))
   if (codec_is_available("gzip")) {
     write_parquet(sym_list, tkpath, compression = "gzip")
   }
