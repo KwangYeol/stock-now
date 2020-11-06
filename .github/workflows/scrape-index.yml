@@ -1,4 +1,4 @@
-name: Scrape latest exchange rate data
+name: Scrape latest global index data
 
 on:
   push:

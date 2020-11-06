@@ -1,4 +1,4 @@
-name: Scrape interest rate data
+name: Scrape MSCI data
 
 on:
   push:
