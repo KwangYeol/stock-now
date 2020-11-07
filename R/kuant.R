@@ -20,9 +20,11 @@ if (!arrow::arrow_available()) {
 
 #                                                             #
 # <-----------           naver finance           -----------> #
-#                                                             
-  url = get_latest_biz_day <- function() {
+#                                                             #
+get_latest_biz_day <- function() {
+  url = 'https://finance.naver.com/sise/sise_deposit.nhn'
 
+  # 최근 영업일 구하기
   biz_day <- GET(url) %>%
     read_html(encoding = 'EUC-KR') %>%
     html_nodes(xpath = '//*[@id="type_0"]/div/ul[2]/li/span') %>%
