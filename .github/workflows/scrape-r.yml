@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RENV_PATHS_ROOT: ~/.local/share/renv
-      R_LIBS: ~/.local/share/rlibs
+      R_LIBS_USER: ~/.local/share/rlibs
 
     steps:
     - name: Check out this repo
@@ -31,15 +31,17 @@ jobs:
           ${{ runner.os }}-renv-
 
     - name: Install system packages
-      run: sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
+      run: |-
+        sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
+        mkdir -p "${{ env.RENV_PATHS_ROOT }}"
+        mkdir -p "${{ env.R_LIBS_USER }}"
 
     - name: Restore packages
       shell: Rscript {0}
       run: |
-        dir.create("${{ env.RENV_PATHS_ROOT }}", recursive = TRUE)
-        .libPaths("${{ env.RENV_PATHS_ROOT }}")
-        if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
+        if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos="https://mran.microsoft.com/")
         renv::restore()
+        .libPaths("${{ env.RENV_PATHS_ROOT }}")
 
     - name: prepare Arrow
       run: Rscript -e 'library(arrow);arrow::install_arrow()'
