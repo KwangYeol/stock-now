@@ -34,9 +34,9 @@ jobs:
         dir.create("${{ env.R_LIBS }}", recursive = TRUE)
         .libPaths("${{ env.R_LIBS }}")
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
+        renv::restore()
         dir.create("${{ env.RENV_PATHS_ROOT }}", recursive = TRUE)
         .libPaths("${{ env.RENV_PATHS_ROOT }}")
-        renv::restore()
 
     # - uses: r-lib/actions/setup-r@v1
     #   with:
