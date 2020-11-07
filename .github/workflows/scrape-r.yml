@@ -40,7 +40,7 @@ jobs:
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
         renv::restore()
 
-    - run: Rscript hello.R
+    - run: Rscript app.R
     
     - name: Commit and push if it changed
       run: |-
