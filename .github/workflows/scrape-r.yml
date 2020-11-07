@@ -39,9 +39,9 @@ jobs:
     - name: Restore packages
       shell: Rscript {0}
       run: |
+        .libPaths( c(Sys.getenv("RENV_PATHS_ROOT"), .libPaths()))
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos="https://mran.microsoft.com/")
         renv::restore()
-        .libPaths("${{ env.RENV_PATHS_ROOT }}")
 
     - name: prepare Arrow
       run: Rscript -e 'library(arrow);arrow::install_arrow()'
