@@ -79,12 +79,7 @@ write_symbols <- function(symbols, filename) {
   sym_list <- do.call(rbind, sym_list)
 
   tkpath <- file.path("obs", paste0(filename, ".parquet"))
-  if (codec_is_available("gzip")) {
-    write_parquet(sym_list, tkpath, compression = "gzip")
-  }
-  else {
-    write_parquet(sym_list, tkpath)
-  }
+  write_parquet(sym_list, tkpath, compression = "gzip")
 }
 
 #                                                             #
@@ -174,11 +169,5 @@ write_tickers <- function(tickers) {
     tickers_saved <- read_parquet(tkpath, compression="gzip")
     tickers <- rbind(tickers, tickers_saved) %>% unique
   }
-  if (codec_is_available("gzip")) {
-    write_parquet(tickers, tkpath, compression="gzip")
-  }
-  else {
-    write_parquet(tickers, tkpath)
-  }
-
+  write_parquet(tickers, tkpath, compression="gzip")
 }
