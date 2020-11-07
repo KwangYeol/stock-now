@@ -44,7 +44,11 @@ jobs:
         renv::restore()
 
     - name: prepare Arrow
-      run: Rscript -e 'library(arrow);arrow::install_arrow();arrow::arrow_available()'
+      shell: Rscript {0}
+      run: |
+        library(arrow)
+        arrow::install_arrow()
+        .rs.restartR()
   
     - name: run hello
       run: Rscript hello.R
