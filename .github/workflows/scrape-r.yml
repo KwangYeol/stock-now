@@ -7,10 +7,10 @@ on:
     - cron: '15 7 * * 1-5'
 
 jobs:
-  scheduled:
-    runs-on: ubuntu-latest
+  scrape-r:
+    runs-on: ubuntu-18.04
     env:
-      RENV_PATHS_ROOT: ~/.local/share/renv
+      RENV_PATHS_ROOT: /home/runner/.local/share/renv
 
     steps:
     - name: Check out this repo
@@ -18,7 +18,7 @@ jobs:
   
     - uses: r-lib/actions/setup-r@v1
       with:
-        r-version: '3.6.3' # The R version to download (if necessary) and use.
+        r-version: '4.0.3' # The R version to download (if necessary) and use.
     - run: Rscript -e 'print("hello")'
 
     # https://github.com/actions/cache/blob/main/examples.md#r---renv
@@ -33,18 +33,17 @@ jobs:
       run: |-
         sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
         mkdir -p "${{ env.RENV_PATHS_ROOT }}"
-        mkdir -p "${{ env.R_LIBS_USER }}"
 
     - name: Restore packages
       shell: Rscript {0}
       run: |
-        print(paste0("LIB = ","${{ env.RENV_PATHS_ROOT }}"))
         .libPaths("${{ env.RENV_PATHS_ROOT }}")
-        if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv", repos="https://mran.microsoft.com/")
+        .libPaths()
+        if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
         renv::restore()
 
     - name: prepare Arrow
-      run: Rscript -e 'library(arrow);arrow::install_arrow()'
+      run: Rscript -e 'library(arrow);arrow::install_arrow();arrow::arrow_available()'
   
     - name: run hello
       run: Rscript hello.R

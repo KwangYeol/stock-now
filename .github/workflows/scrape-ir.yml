@@ -7,8 +7,8 @@ on:
     - cron: '7 0 4,14,24 * *'
 
 jobs:
-  scheduled:
-    runs-on: ubuntu-latest
+  scrape-ir:
+    runs-on: ubuntu-18.04
     steps:
     - name: Check out this repo
       uses: actions/checkout@v2
