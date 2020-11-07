@@ -172,3 +172,35 @@ write_tickers <- function(tickers) {
   }
   write_parquet(tickers, tkpath, compression="gzip")
 }
+
+#                                                             #
+# <-----------            WISE  INDEX            -----------> #
+#                                                             #
+get_wise_index <- function(yyyymmdd) {
+  sector_code = c('G2510', 'G2520', 'G2530', 'G2540', 'G2550', 'G2560', 
+  'G3510', 'G3520', 'G5010', 
+  'G5020', 'G4010', 'G4020', 'G4030', 'G4040', 'G4050', 
+  'G1010',   'G2010', 'G2020', 'G2030', 'G5510', 'G3010', 'G3020', 
+  'G3030', 'G1510', 'G4510',   'G4520',   'G4530',   'G4535',   'G4540'
+  )
+  data_sector = list()
+
+  for (i in sector_code) {
+
+    url = paste0(
+      'http://www.wiseindex.com/Index/GetIndexComponets',
+      '?ceil_yn=0&dt=', yyyymmdd, '&sec_cd=', i)
+    data = fromJSON(url)
+    data = data$list
+
+    data_sector[[i]] = data
+
+    Sys.sleep(sample(5:9, 1)/10)
+  }
+
+  data_sector <- rbindlist(data_sector)
+  data_sector %>%
+    mutate(SEC_1ST = substr(`SEC_CD`, 1, 3)) ->
+    data_sector
+  fwrite(data_sector, file.path("obs", "wics_sector_2nd.csv"))
+}
