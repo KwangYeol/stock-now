@@ -20,7 +20,19 @@ if (!arrow::arrow_available()) {
 
 #                                                             #
 # <-----------           naver finance           -----------> #
-#                                                             #
+#                                                             
+  url = get_latest_biz_day <- function() {
+
+  biz_day <- GET(url) %>%
+    read_html(encoding = 'EUC-KR') %>%
+    html_nodes(xpath = '//*[@id="type_0"]/div/ul[2]/li/span') %>%
+    html_text() %>%
+    str_match(('[0-9]+.[0-9]+.[0-9]+') ) %>%
+    str_replace_all('\\.', '')
+
+  biz_day
+}
+
 get_symbol_ <- function(name, count=2500, timeframe="day") {
   url = paste0(
     'https://fchart.stock.naver.com/sise.nhn?symbol=', name,
@@ -92,8 +104,7 @@ ticker_download_url <- 'http://file.krx.co.kr/download.jspx'
 gen_otp <- function(utype = 'index') {
   gen_otp_data = list(name = 'fileDown', filetype = 'csv')
 
-  yyyymmdd <- Sys.Date()
-  yyyymmdd <- format(yyyymmdd, format="%Y%m%d")
+  yyyymmdd <- get_latest_biz_day()
 
   if (utype=='index') {
     c_url="MKD/13/1302/13020401/mkd13020401"
