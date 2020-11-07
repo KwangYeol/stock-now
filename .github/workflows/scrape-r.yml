@@ -39,7 +39,6 @@ jobs:
         renv::restore()
 
     - name: run hello
-      working-directory: ~/work/stock-now
       run: Rscript hello.R
     
     - name: Commit and push if it changed
