@@ -29,6 +29,8 @@ jobs:
         sudo apt install libcurl4-openssl-dev libssl-dev libxml2-dev
         mkdir -p "${{ env.RENV_PATHS_ROOT }}"
 
+    - uses: r-lib/actions/setup-r@v1
+
     - name: Restore packages
       shell: Rscript {0}
       run: |
@@ -38,8 +40,7 @@ jobs:
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
         renv::restore()
 
-    - name: run hello
-      run: Rscript hello.R
+    - run: Rscript hello.R
     
     - name: Commit and push if it changed
       run: |-
