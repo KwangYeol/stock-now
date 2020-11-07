@@ -1,3 +1,5 @@
+.libPaths( c(Sys.getenv("RENV_PATHS_ROOT"), .libPaths()))
+
 suppressMessages(library(httr))
 suppressMessages(library(rvest))
 suppressMessages(library(data.table))
@@ -12,7 +14,6 @@ suppressMessages(library(timetk))
 suppressMessages(library(dplyr))
 suppressMessages(library(arrow))
 
-.libPaths( c(Sys.getenv("RENV_PATHS_ROOT"), .libPaths()))
 if (!arrow::arrow_available()) {
   arrow::install_arrow()
 }
