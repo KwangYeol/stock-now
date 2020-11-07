@@ -16,10 +16,10 @@ jobs:
     - name: Check out this repo
       uses: actions/checkout@v2
   
-    - uses: r-lib/actions/setup-r@v1
-      with:
-        r-version: '4.0.3' # The R version to download (if necessary) and use.
-    - run: Rscript -e 'print("hello")'
+    # - uses: r-lib/actions/setup-r@v1
+    #   with:
+    #     r-version: '4.0.3' # The R version to download (if necessary) and use.
+    # - run: Rscript -e 'print("hello")'
 
     # https://github.com/actions/cache/blob/main/examples.md#r---renv
     - uses: actions/cache@v2
@@ -43,13 +43,6 @@ jobs:
         if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
         renv::restore()
 
-    - name: prepare Arrow
-      shell: Rscript {0}
-      run: |
-        library(arrow)
-        arrow::install_arrow()
-        .rs.restartR()
-  
     - name: run hello
       run: Rscript hello.R
     
