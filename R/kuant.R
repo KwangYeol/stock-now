@@ -81,20 +81,36 @@ get_symbols <- function(names) {
   symbol_list
 }
 
-write_symbols <- function(symbols, filename) {
-  sym_list = list()
-  i = 1
+write_symbols <- function(symbols, filename, format="parquet") {
+  sym_path <- file.path("obs", filename)
+  if(dir.exists(sym_path)) {
+    ds <- open_dataset(sym_path)
+  }
+  else {
+    ds <- data.frame(Symbol=character(), Date=character(), 
+                     Open=double(), High=double(), Low=double(), Close=double(), Volume=double())
+  }
+
   for (name in names(symbols)) {
     symbols[[name]] %>%
-      mutate(`symbol` = name, `Date` = rownames(.)) -> 
+      mutate(`Symbol` = name, `Date` = rownames(.)) -> 
       sym
-    sym_list[[i]] <- sym
-    i = i + 1
-  }
-  sym_list <- do.call(rbind, sym_list)
+    ds <- sym[,c(6,7,1,2,3,4,5)]
 
-  tkpath <- file.path("obs", paste0(filename, ".parquet"))
-  write_parquet(sym_list, tkpath, compression = "gzip")
+    # get target ds
+    ds_loaded <- ds %>% filter(`Symbol` == name)
+    full_join(ds_loaded, ds, by=c("Symbol", "Date")) %>% 
+      mutate(
+        `Open` = ifelse(is.na(Open.y), Open.x, Open.y),
+        `High` = ifelse(is.na(High.y), High.x, High.y),
+        `Low` = ifelse(is.na(Low.y), Low.x, Low.y),
+        `Close` = ifelse(is.na(Close.y), Close.x, Close.y),
+        `Volume` = ifelse(is.na(Volume.y), Volume.x, Volume.y)
+      ) %>%
+      select(c('Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume')) %>%
+      group_by(Symbol) %>% 
+      write_dataset(sym_path, format=format)
+  }
 }
 
 #                                                             #
