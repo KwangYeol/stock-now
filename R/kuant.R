@@ -65,11 +65,11 @@ get_symbol_ <- function(name, count=2500, timeframe="day") {
   df %>% select(-c(`Date`))
 }
 
-get_symbols <- function(names) {
+get_symbols <- function(names, count=2500, timeframe="day") {
   symbol_list = list()
   i = 1
   for (name in names) {
-    df <- get_symbol_(name)
+    df <- get_symbol_(name, count, timeframe)
     symbol_list[[name]] <- df
     # sleep
     cat(".")
