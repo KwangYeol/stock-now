@@ -120,13 +120,7 @@ write_symbols <- function(symbols, filename) {
         select(c('Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume')) %>%
         group_by(Symbol) ->
         ds
-      # glimpse(ds_new)
-      # write_dataset(ds_new, sym_path, format=format)
-      # write_parquet(ds_new, file.path(x_dir, "index.gz.parquet"), compression="gzip")
     }
-    # else {
-    #   # write_dataset(ds, sym_path, format=format)
-    # }
     write_parquet(ds, file.path(x_dir, "index.gz.parquet"), compression="gzip")
   }
 }
