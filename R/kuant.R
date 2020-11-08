@@ -84,10 +84,11 @@ get_symbols <- function(names, count=2500, timeframe="day") {
 write_symbols <- function(symbols, filename, format="parquet") {
   sym_path <- file.path("obs", filename)
   if(dir.exists(sym_path)) {
-    ds <- open_dataset(sym_path)
+    ds_loaded <- open_dataset(sym_path)
   }
   else {
-    ds <- data.frame(Symbol=character(), Date=character(), 
+    dir.create(sym_path, showWarnings = FALSE)
+    ds_loaded <- data.frame(Symbol=character(), Date=character(), 
                      Open=double(), High=double(), Low=double(), Close=double(), Volume=double())
   }
 
@@ -98,8 +99,8 @@ write_symbols <- function(symbols, filename, format="parquet") {
     ds <- sym[,c(6,7,1,2,3,4,5)]
 
     # get target ds
-    ds_loaded <- ds %>% filter(`Symbol` == name)
-    full_join(ds_loaded, ds, by=c("Symbol", "Date")) %>% 
+    ds_part <- ds_loaded %>% filter(`Symbol` == name)
+    full_join(ds_part, ds, by=c("Symbol", "Date")) %>% 
       mutate(
         `Open` = ifelse(is.na(Open.y), Open.x, Open.y),
         `High` = ifelse(is.na(High.y), High.x, High.y),
