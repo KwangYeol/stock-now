@@ -7,7 +7,7 @@ write_tickers(tickers)
 
 # ==> Step 2. get symbols
 symbols <- tickers[['종목코드']]
-symbols <- c(symbols[c(1:5)], "kospi", "kosdaq")
+symbols <- c(symbols, "kospi", "kosdaq")
 
-df <- get_symbols(symbols, count=100)
+df <- get_symbols(symbols, count=8000)
 write_symbols(df, "index")
