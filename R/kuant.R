@@ -81,12 +81,15 @@ get_symbols <- function(names, count=2500, timeframe="day") {
   symbol_list
 }
 
-write_symbols <- function(symbols, filename, format="parquet") {
+write_symbols <- function(symbols, filename) {
   sym_path <- file.path("obs", filename)
   if(dir.exists(sym_path)) {
-    ds_loaded <- open_dataset(sym_path)
+    print("exist")
+    ds_loaded <- open_dataset(sym_path) %>%
+    collect()
   }
   else {
+    print("not exist")
     dir.create(sym_path, showWarnings = FALSE)
     ds_loaded <- data.frame(Symbol=character(), Date=character(), 
                      Open=double(), High=double(), Low=double(), Close=double(), Volume=double())
@@ -97,20 +100,34 @@ write_symbols <- function(symbols, filename, format="parquet") {
       mutate(`Symbol` = name, `Date` = rownames(.)) -> 
       sym
     ds <- sym[,c(6,7,1,2,3,4,5)]
+    glimpse(ds)
+
+    x_dir <- file.path(sym_path, name)
+    dir.create(x_dir, showWarnings = FALSE)
 
     # get target ds
-    ds_part <- ds_loaded %>% filter(`Symbol` == name)
-    full_join(ds_part, ds, by=c("Symbol", "Date")) %>% 
-      mutate(
-        `Open` = ifelse(is.na(Open.y), Open.x, Open.y),
-        `High` = ifelse(is.na(High.y), High.x, High.y),
-        `Low` = ifelse(is.na(Low.y), Low.x, Low.y),
-        `Close` = ifelse(is.na(Close.y), Close.x, Close.y),
-        `Volume` = ifelse(is.na(Volume.y), Volume.x, Volume.y)
-      ) %>%
-      select(c('Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume')) %>%
-      group_by(Symbol) %>% 
-      write_dataset(sym_path, format=format)
+    if (nrow(ds_loaded) > 0) {
+      ds_part <- ds_loaded %>% filter(`Symbol` == name)
+
+      full_join(ds_part, ds, by=c("Symbol", "Date")) %>% 
+        mutate(
+          `Open` = ifelse(is.na(Open.y), Open.x, Open.y),
+          `High` = ifelse(is.na(High.y), High.x, High.y),
+          `Low` = ifelse(is.na(Low.y), Low.x, Low.y),
+          `Close` = ifelse(is.na(Close.y), Close.x, Close.y),
+          `Volume` = ifelse(is.na(Volume.y), Volume.x, Volume.y)
+        ) %>%
+        select(c('Symbol', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume')) %>%
+        group_by(Symbol) ->
+        ds
+      # glimpse(ds_new)
+      # write_dataset(ds_new, sym_path, format=format)
+      # write_parquet(ds_new, file.path(x_dir, "index.gz.parquet"), compression="gzip")
+    }
+    # else {
+    #   # write_dataset(ds, sym_path, format=format)
+    # }
+    write_parquet(ds, file.path(x_dir, "index.gz.parquet"), compression="gzip")
   }
 }
 
