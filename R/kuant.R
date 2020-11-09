@@ -101,7 +101,7 @@ write_symbols <- function(symbols, filename) {
       mutate(`Symbol` = name, `Date` = rownames(.)) -> 
       sym
     ds <- sym[,c(6,7,1,2,3,4,5)]
-    glimpse(ds)
+    # glimpse(ds)
 
     x_dir <- file.path(sym_path, name)
     dir.create(x_dir, showWarnings = FALSE, recursive=TRUE)
@@ -228,24 +228,27 @@ get_wise_index <- function() {
   data_sector = list()
   yyyymmdd <- get_latest_biz_day()
 
-  for (i in sector_code) {
+  tryCatch({
+    for (i in sector_code) {
 
-    url = paste0(
-      'http://www.wiseindex.com/Index/GetIndexComponets',
-      '?ceil_yn=0&dt=', yyyymmdd, '&sec_cd=', i)
-    data = fromJSON(url)
-    data = data$list
+      url = paste0(
+        'http://www.wiseindex.com/Index/GetIndexComponets',
+        '?ceil_yn=0&dt=', yyyymmdd, '&sec_cd=', i)
+      data = fromJSON(url)
+      data = data$list
 
-    data_sector[[i]] = data
+      data_sector[[i]] = data
 
-    Sys.sleep(sample(12:20, 1)/10)
-  }
-
-  data_sector <- rbindlist(data_sector)
-  data_sector %>%
-    mutate(SEC_1ST = substr(`SEC_CD`, 1, 3)) ->
-    data_sector
-  fwrite(data_sector, file.path("obs", "wics_sector.csv"))
+      Sys.sleep(sample(10:30, 1)/10)
+    }
+    data_sector <- rbindlist(data_sector)
+    data_sector %>%
+      mutate(SEC_1ST = substr(`SEC_CD`, 1, 3)) ->
+      data_sector
+    fwrite(data_sector, file.path("obs", "wics_sector.csv"))
+  },error = function(e) {
+      warning(paste0("Error in wise index"))
+  })
 }
 
 #                                                             #
