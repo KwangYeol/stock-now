@@ -13,6 +13,7 @@ suppressMessages(library(lubridate))
 suppressMessages(library(timetk))
 suppressMessages(library(dplyr))
 suppressMessages(library(arrow))
+suppressMessages(library(jsonlite))
 
 if (!arrow::arrow_available()) {
   arrow::install_arrow()
@@ -21,7 +22,7 @@ if (!arrow::arrow_available()) {
 #                                                             #
 # <-----------           naver finance           -----------> #
 #                                                             #
-get_latest_biz_day <- function() {
+get_latest_biz_day <- function(sep='') {
   url = 'https://finance.naver.com/sise/sise_deposit.nhn'
 
   # 최근 영업일 구하기
@@ -30,7 +31,7 @@ get_latest_biz_day <- function() {
     html_nodes(xpath = '//*[@id="type_0"]/div/ul[2]/li/span') %>%
     html_text() %>%
     str_match(('[0-9]+.[0-9]+.[0-9]+') ) %>%
-    str_replace_all('\\.', '')
+    str_replace_all('\\.', sep)
 
   biz_day
 }
@@ -90,7 +91,7 @@ write_symbols <- function(symbols, filename) {
   }
   else {
     print("not exist")
-    dir.create(sym_path, showWarnings = FALSE)
+    dir.create(sym_path, showWarnings = FALSE, recursive=TRUE)
     ds_loaded <- data.frame(Symbol=character(), Date=character(), 
                      Open=double(), High=double(), Low=double(), Close=double(), Volume=double())
   }
@@ -103,7 +104,7 @@ write_symbols <- function(symbols, filename) {
     glimpse(ds)
 
     x_dir <- file.path(sym_path, name)
-    dir.create(x_dir, showWarnings = FALSE)
+    dir.create(x_dir, showWarnings = FALSE, recursive=TRUE)
 
     # get target ds
     if (nrow(ds_loaded) > 0) {
@@ -217,7 +218,7 @@ write_tickers <- function(tickers) {
 #                                                             #
 # <-----------            WISE  INDEX            -----------> #
 #                                                             #
-get_wise_index <- function(yyyymmdd) {
+get_wise_index <- function() {
   sector_code = c('G2510', 'G2520', 'G2530', 'G2540', 'G2550', 'G2560', 
   'G3510', 'G3520', 'G5010', 
   'G5020', 'G4010', 'G4020', 'G4030', 'G4040', 'G4050', 
@@ -225,6 +226,7 @@ get_wise_index <- function(yyyymmdd) {
   'G3030', 'G1510', 'G4510',   'G4520',   'G4530',   'G4535',   'G4540'
   )
   data_sector = list()
+  yyyymmdd <- get_latest_biz_day()
 
   for (i in sector_code) {
 
@@ -243,5 +245,209 @@ get_wise_index <- function(yyyymmdd) {
   data_sector %>%
     mutate(SEC_1ST = substr(`SEC_CD`, 1, 3)) ->
     data_sector
-  fwrite(data_sector, file.path("obs", "wics_sector_2nd.csv"))
+  fwrite(data_sector, file.path("obs", "wics_sector.csv"))
+}
+
+#                                                             #
+# <-----------              fnguide              -----------> #
+#                                                             #
+get_fn_value <- function(name) {
+  # url 생성
+  url = paste0(
+    'http://comp.fnguide.com/SVO2/ASP/'
+    ,'SVD_Finance.asp?pGB=1&gicode=A',
+    name)
+
+  # 데이터 다운로드 후 테이블 추출
+  GET(url, user_agent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+                      AppleWebKit/537.36 (KHTML, like Gecko)
+                      Chrome/70.0.3538.77 Safari/537.36')) %>%
+    read_html() %>%
+    html_table() -> raw_data
+
+  # 3개 재무제표를 하나로 합치기
+  data_IS = raw_data[[1]]
+  data_BS = raw_data[[3]]
+  data_CF = raw_data[[5]]
+
+  data_IS = data_IS[, 1:(ncol(data_IS)-2)]
+  data_fs = rbind(data_IS, data_BS, data_CF)
+
+  # 데이터 클랜징
+  data_fs[, 1] = gsub('계산에 참여한 계정 펼치기',
+                      '', data_fs[, 1])
+  data_fs = data_fs[!duplicated(data_fs[, 1]), ]
+
+  rownames(data_fs) = NULL
+  rownames(data_fs) = data_fs[, 1]
+  data_fs[, 1] = NULL
+
+  # 12월 재무제표만 선택
+  data_fs = data_fs[, substr(colnames(data_fs), 6,7) == "12"]
+  data_fs = sapply(data_fs, function(x) {
+    str_replace_all(x, ',', '') %>%
+      as.numeric()
+  }) %>%
+    data.frame(., row.names = rownames(data_fs))
+
+  # 가치지표 분모부분
+  value_type = c('지배주주순이익',
+                 '자본',
+                 '영업활동으로인한현금흐름',
+                 '매출액')
+
+  # 해당 재무데이터만 선택
+  value_index = data_fs[match(value_type, rownames(data_fs)),
+                        ncol(data_fs)]
+
+  # Snapshot 페이지 불러오기
+  url =
+    paste0(
+      'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp',
+      '?pGB=1&gicode=A',name)
+  data = GET(url,
+  user_agent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+             AppleWebKit/537.36 (KHTML, like Gecko)
+             Chrome/70.0.3538.77 Safari/537.36'))
+
+  # 현재 주가 크롤링
+  price = read_html(data) %>%
+    html_node(xpath = '//*[@id="svdMainChartTxt11"]') %>%
+    html_text() %>%
+    parse_number()
+
+  # 보통주 발행주식수 크롤링
+  share = read_html(data) %>%
+    html_node(
+      xpath =
+        '//*[@id="svdMainGrid1"]/table/tbody/tr[7]/td[1]') %>%
+    html_text() %>%
+    strsplit('/') %>%
+    unlist() %>%
+    .[1] %>%
+    parse_number()
+
+  # 가치지표 계산
+  data_value = price / (value_index * 100000000 / share)
+  names(data_value) = c('PER', 'PBR', 'PCR', 'PSR')
+  data_value[data_value < 0] = NA
+
+  return(list(value=data_value, fs=data_fs))
+}
+
+get_guide_crawl <- function(tickers) {
+  value_list = list()
+  fs_list = list()
+
+  for(code in 1 : nrow(tickers) ) {
+    name = tickers$'종목코드'[code]
+
+    # 오류 발생 시 이를 무시하고 다음 루프로 진행
+    tryCatch({
+      ret <- get_fn_value(name)
+      cat(".")
+      value_list[[code]] <- ret$value %>% t() %>% data.frame
+      value_list[[code]]$Symbol <- name
+      fs_list[[code]] <- ret$fs
+    }, error = function(e) {
+      value_list[[code]] <- data.frame(NA)
+      value_list[[code]]$Symbol <- name
+      fs_list[[code]] <- data.frame(NA)
+      warning(paste0("Error in Guide: ", name))
+    })
+    if (code %% 100 == 0) {
+      print(paste0("~ ", code))
+    }
+
+    # 1.2 ~ 1.8 초간 타임슬립 적용
+    Sys.sleep(sample(12:18, 1)/10)
+  }
+  print("get_guide_crawl: done")
+  return(list(value=value_list, fs=fs_list))
+}
+
+get_guide <- function(tickers, value_list, fs_list) {
+  yyyymmdd <- get_latest_biz_day(sep="-")
+  yyyy <- substr(yyyymmdd, 1, 4)
+  
+  v_path <- file.path("obs", "value", yyyy)
+  if(dir.exists(v_path)) {
+    values_loaded <- open_dataset(v_path) %>%
+      collect()
+  }
+  else {
+    dir.create(v_path, showWarnings = FALSE, recursive=TRUE)
+    values_loaded <- data.frame(
+      Date=character(), 
+      Symbol=character(),
+      PER=double(), PBR=double(), PCR=double(), PSR=double())
+  }
+
+  # 💵
+  value_list %>%
+    bind_rows %>%
+    select('PER', 'PBR', 'PCR', 'PSR', 'Symbol') %>%
+    mutate_all(list(~na_if(., Inf))) ->
+    values
+
+  left_join(values, tickers, by = c('Symbol' = '종목코드')) %>%
+    mutate(PER = PER.x, PBR = PBR.x, Date=yyyymmdd) %>% 
+    select(Date, Symbol, PER, PBR, PCR, PSR) ->
+    values
+
+  full_join(values_loaded, values, by=c("Date", "Symbol")) %>% 
+    mutate(
+      `PER` = ifelse(is.na(PER.y), PER.x, PER.y),
+      `PBR` = ifelse(is.na(PBR.y), PBR.x, PBR.y),
+      `PCR` = ifelse(is.na(PCR.y), PCR.x, PCR.y),
+      `PSR` = ifelse(is.na(PSR.y), PSR.x, PSR.y)
+    ) %>%
+    select(c('Date', 'Symbol', 'PER', 'PBR', 'PCR', 'PSR')) %>%
+    group_by(Date) ->
+    values
+
+  write_parquet(values, file.path(v_path, "values.gz.parquet"), compression="gzip")
+
+  # 📕
+  f_path <- file.path("obs", "fs", yyyy)
+  dir.create(f_path, showWarnings = FALSE, recursive=TRUE)
+
+  fs_item = fs_list[[1]] %>% rownames()
+  fs_list2 = list()
+
+  for (i in 1 : length(fs_item)) {
+    select_fs = lapply(fs_list, function(x) {
+      # 해당 항목이 있을시 데이터를 선택
+      if ( fs_item[i] %in% rownames(x) ) {
+        x[which(rownames(x) == fs_item[i]), ]
+
+        # 해당 항목이 존재하지 않을 시, NA로 된 데이터프레임 생성
+      } else {
+        data.frame(NA)
+      }
+    })
+
+    # 리스트 데이터를 행으로 묶어줌
+    select_fs = bind_rows(select_fs)
+
+    # 열이름이 '.' 혹은 'NA.'인 지점은 삭제 (NA 데이터)
+    select_fs = select_fs[!colnames(select_fs) %in%
+                            c('.', 'NA.')]
+
+    # 연도 순별로 정리
+    select_fs = select_fs[, order(names(select_fs))]
+
+    # 행이름을 티커로 변경
+    # rownames(select_fs) = tickers[1:nrow(select_fs), '종목코드'] %>% t()
+    rownames(select_fs) = tickers[, '종목코드'] %>% t()
+
+    # 리스트에 최종 저장
+    fs_list2[[i]] = select_fs
+  }
+
+  # 리스트 이름을 재무 항목으로 변경
+  names(fs_list2) = fs_item
+  
+  # write_parquet(fs_list2, file.path(f_path, "fs_list.gz.parquet"), compression="gzip")
+  saveRDS(fs_list2, file.path(f_path, "fs_list.Rds"))
 }
