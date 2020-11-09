@@ -406,6 +406,7 @@ get_guide <- function(tickers, value_list, fs_list) {
     values
 
   write_parquet(values, file.path(v_path, "values.gz.parquet"), compression="gzip")
+  print("values.gz.parquet: done")
 
   # 📕
   f_path <- file.path("obs", "fs", yyyy)
@@ -416,14 +417,18 @@ get_guide <- function(tickers, value_list, fs_list) {
 
   for (i in 1 : length(fs_item)) {
     select_fs = lapply(fs_list, function(x) {
-      # 해당 항목이 있을시 데이터를 선택
-      if ( fs_item[i] %in% rownames(x) ) {
-        x[which(rownames(x) == fs_item[i]), ]
-
-        # 해당 항목이 존재하지 않을 시, NA로 된 데이터프레임 생성
-      } else {
+      tryCatch({
+        if ( fs_item[i] %in% rownames(x) ) {
+          # 해당 항목이 있을시 데이터를 선택
+          x[which(rownames(x) == fs_item[i]), ]
+        } else {
+          # 해당 항목이 존재하지 않을 시, NA로 된 데이터프레임 생성
+          data.frame(NA)
+        }
+      }, error = function(e) {
         data.frame(NA)
-      }
+        warning(paste0("Error in fs list: ", fs_item[i]))
+      })
     })
 
     # 리스트 데이터를 행으로 묶어줌
@@ -449,4 +454,5 @@ get_guide <- function(tickers, value_list, fs_list) {
   
   # write_parquet(fs_list2, file.path(f_path, "fs_list.gz.parquet"), compression="gzip")
   saveRDS(fs_list2, file.path(f_path, "fs_list.Rds"))
+  print("fs_list.Rds: done")
 }
