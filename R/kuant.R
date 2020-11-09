@@ -238,7 +238,7 @@ get_wise_index <- function() {
 
     data_sector[[i]] = data
 
-    Sys.sleep(sample(5:9, 1)/10)
+    Sys.sleep(sample(12:20, 1)/10)
   }
 
   data_sector <- rbindlist(data_sector)
@@ -359,8 +359,7 @@ get_guide_crawl <- function(tickers) {
       print(paste0("~ ", code))
     }
 
-    # 1.2 ~ 1.8 초간 타임슬립 적용
-    Sys.sleep(sample(12:18, 1)/10)
+    Sys.sleep(sample(15:22, 1)/10)
   }
   print("get_guide_crawl: done")
   return(list(value=value_list, fs=fs_list))
